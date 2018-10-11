@@ -23,17 +23,15 @@ public class Executor extends Exception {
 								order.clearFileds();
 								order.getRowValue(i);
 								if (iter == 1) {
-									// fibo.addFiboDetailsInCSV(order,
-									// order.getFiboOutput());
 									FiboDetails.FiboMap.put(order.Stockkey,	new FiboDetails(order, order.getAccurateFibo()));
 									fibo.addFiboDetailsInCSV(order, order.getAccurateFibo());
 								}
-								// order.gettotQntyOutput();
-								// order.getChangePerOutput();
-								order.getLimitPrice();
-								order.BuySellPlaceOrder();
+								 order.gettotQntyOutput();
+								 order.getChangePerOutput();
+								 order.getLimitPrice();
+								 order.BuySellPlaceOrder();
 							}
-						} else if (Orders.getStockOrderdList().size() > 0) {
+						} /*else if (Orders.getStockOrderdList().size() > 0) {
 							try {
 								for (Object str : Orders.StockList) {
 									order.clearFileds();
@@ -45,7 +43,7 @@ public class Executor extends Exception {
 							} catch (Exception e) {
 
 							}
-						}
+						}*/
 						iter++;
 					}
 				}

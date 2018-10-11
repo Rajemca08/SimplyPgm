@@ -12,7 +12,7 @@ public class Base {
 			DecimalFormat df = new DecimalFormat("##.##");
 			df.setRoundingMode(RoundingMode.DOWN);
 			strValues = df.format(values);
-			System.out.println(df.format(values));			
+						
 		
 		}catch(Exception e){
 			throw e;			

@@ -1,12 +1,14 @@
 package Stock.PlaceOrder;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Orders {
 
 	public String OrderType = null;
 	public String StockName = null;
+	public String StockKey = null;
 	public String Symbol = null;
 	public String OrderStatus = null;
 	public Float BuyPrice = 0.0f;
@@ -19,8 +21,9 @@ public class Orders {
 	public long SLOdrID = 0;
 	public String SLOdrIDStatus = null;
 	
-	public static List<Orders> odrList = new ArrayList<Orders>();
+	//public static List<Orders> odrList = new ArrayList<Orders>();
 	public static List<String> StockList = new ArrayList<String>();
+	public static HashMap<String,Orders> MapOrders = new HashMap<String,Orders>();
 
 
 	public Orders(BuySellOrder order) {
@@ -28,6 +31,7 @@ public class Orders {
 		OrderType = order.OrderType;
 		OdrID = order.OdrID;		
 		StockName = order.Stockname;
+		StockKey  = order.Stockkey;
 		Symbol = order.Stockname;
 		OrderStatus = order.OrderStatus;
 		BuyPrice = order.buyprice;
@@ -38,15 +42,14 @@ public class Orders {
 		SLOdrIDStatus = order.SLOdrIDStatus;
 		SLPrice = order.SLPrice;
 		SLTPrice = order.SLTPrice;
-		StockList.add(order.Stockname);
+		StockList.add(OrderType + order.Stockname);		
 	}
 
 	public static List<String> getStockOrderdList() {
 		return Orders.StockList;
 
 	}
-	public static List<Orders> getStockOrders() {
-		return Orders.odrList;
-	}
+	
+
 
 }

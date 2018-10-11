@@ -38,10 +38,8 @@ import ExceptionPack.MyException;
 import FiboMailTrigger.FiboDetails;
 import Mailer.EmailUtil;
 
-
 public class BuySellOrder extends Exception {
 
-	
 	public HashMap<String, Integer> hdrMap = new HashMap<String, Integer>();
 	public Properties MailProp = new Properties();
 	public Properties InputProp = new Properties();
@@ -51,7 +49,7 @@ public class BuySellOrder extends Exception {
 	public HashMap<String, String> MailHistory = new HashMap<String, String>();
 	public String OrderDetails = null;
 	public String MobileNumber = null;
-	public static File FiboInput =null;
+	public static File FiboInput = null;
 
 	/*** Column Values ***/
 	public String Stockname = null;
@@ -66,9 +64,8 @@ public class BuySellOrder extends Exception {
 	public Float sellprice = 0.0f;
 	public Float buyprice = 0.0f;
 	public Float changePer = 0.0f;
-	
-	
-	public Float Ylow =  0.0f;
+
+	public Float Ylow = 0.0f;
 	public Float YHigh = 0.0f;
 	public String Stockkey = null;
 
@@ -90,13 +87,14 @@ public class BuySellOrder extends Exception {
 	public long SLOdrID = 0;
 	public String SLOdrIDStatus = null;
 	public String ActionMsg = null;
-	public CSVReport Report =  CSVReport.getInstance();
-	//public FiboCSVReport Report1 =FiboCSVReport.getInstance();
+	public CSVReport Report = CSVReport.getInstance();
+
+	// public FiboCSVReport Report1 =FiboCSVReport.getInstance();
 	public void clearFileds() {
 		System.out.println("\n*** Clearing Fileds ***\n");
 
 		ActionMsg = "Clearing Fields";
-		
+
 		Stockname = null;
 		open = 0.0f;
 		ltp = 0.0f;
@@ -114,52 +112,52 @@ public class BuySellOrder extends Exception {
 		SLTPrice = 0.0f;
 		ExtraProfit = 0;
 		SLQnty = 0;
-				
+
 		OrderType = null;
-		OrderStatus =null;
-		OdrID =0;
-		
+		OrderStatus = null;
+		OdrID = 0;
+
 		SLOdrID = 0;
 		SLOdrIDStatus = null;
 	}
-	
 
 	public BuySellOrder() throws Exception {
 		try {
 			ActionMsg = "Constructor => Intializing Properties file";
 			MailProp.load(new FileInputStream("C://PlaceOrderBot//Credentials.properties"));
-			System.setProperty("webdriver.chrome.driver",MailProp.getProperty("chromeExe"));  
-			FiboInput  = new File(MailProp.getProperty("FiboInputFile"));
+			System.setProperty("webdriver.chrome.driver", MailProp.getProperty("chromeExe"));
+			FiboInput = new File(MailProp.getProperty("FiboInputFile"));
 			FiboProp.load(new FileInputStream(FiboInput.getPath()));
 			ChromeOptions options = new ChromeOptions();
 			options.addArguments("disable-infobars");
 			driver = new ChromeDriver(options);
-			
+
 		} catch (Exception e) {
 			throw e;
 		}
 	}
-	
+
 	public BuySellOrder(String Values) throws Exception {
 		try {
 			ActionMsg = "Constructor => Intializing Properties file";
-			
-			MailProp.load(new FileInputStream("C://PlaceOrderBot//Credentials.properties"));			
+
+			MailProp.load(new FileInputStream("C://PlaceOrderBot//Credentials.properties"));
 			DateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
 			Date dateobj = new Date();
 			String currentDate = df.format(dateobj);
 			currentDate = currentDate.split(" ")[0].replaceAll("/", "_");
-			//FiboInput  = new File("C://PlaceOrderBot//FiboInput//FiboInput"+currentDate+".properties");
-			FiboInput  = new File(MailProp.getProperty("FiboInputFile"));
-			if(!FiboInput.exists())
+			// FiboInput = new
+			// File("C://PlaceOrderBot//FiboInput//FiboInput"+currentDate+".properties");
+			FiboInput = new File(MailProp.getProperty("FiboInputFile"));
+			if (!FiboInput.exists())
 				FiboInput.createNewFile();
-			
+
 			FiboProp.load(new FileInputStream(FiboInput.getPath()));
 			System.setProperty("webdriver.chrome.driver", MailProp.getProperty("chromeExe"));
 			ChromeOptions options = new ChromeOptions();
 			options.addArguments("disable-infobars");
 			driver = new ChromeDriver(options);
-			
+
 		} catch (Exception e) {
 			throw e;
 		}
@@ -167,33 +165,35 @@ public class BuySellOrder extends Exception {
 
 	public void profitBooking() throws Exception {
 		try {
-		
-			ActionMsg = "Profit Booking " + Stockname;
-			
-			if (Orders.getStockOrderdList().contains(Stockname) && ltp > (open + limit + profit) && buyprice > (open + (limit + profit))) {
 
-				//SellOrder();
-				OrderDetails = Stockname+",P-Sold," + Qnty + "," + ltp + "," + "" + "," + low + "," + open + "," + high + "," + close + "," + getCurrentTime()+ ",";
+			ActionMsg = "Profit Booking " + Stockname;
+
+			if (Orders.getStockOrderdList().contains(Stockname) && ltp > (open + limit + profit)
+					&& buyprice > (open + (limit + profit))) {
+
+				// SellOrder();
+				OrderDetails = Stockname + ",P-Sold," + Qnty + "," + ltp + "," + "" + "," + low + "," + open + ","
+						+ high + "," + close + "," + getCurrentTime() + ",";
 				Report.addOrderDetailsInCSV(OrderDetails);
-				sendAlertMail(Stockname + "=>P-Sold @" + buyprice   + " SL @" + SLPrice + ":Ltp@" + ltp + ":L@" + low + ":O@" + open + ":H@" + high );
-				
+				sendAlertMail(Stockname + "=>P-Sold @" + buyprice + " SL @" + SLPrice + ":Ltp@" + ltp + ":L@" + low
+						+ ":O@" + open + ":H@" + high);
 
 			}
-			if (Orders.getStockOrderdList().contains(Stockname) && ltp < (open - (limit + profit)) && sellprice < (open - (limit + profit))) {
+			if (Orders.getStockOrderdList().contains(Stockname) && ltp < (open - (limit + profit))
+					&& sellprice < (open - (limit + profit))) {
 
-				//buyOrder();
-				OrderDetails = Stockname+",P-Bought," + Qnty + "," + ltp + "," + "" + "," + low + "," + open + "," + high + "," + close + "," + getCurrentTime()+ ",";
+				// buyOrder();
+				OrderDetails = Stockname + ",P-Bought," + Qnty + "," + ltp + "," + "" + "," + low + "," + open + ","
+						+ high + "," + close + "," + getCurrentTime() + ",";
 				Report.addOrderDetailsInCSV(OrderDetails);
-				sendAlertMail(Stockname + "=>P-Bought @" + sellprice   + " SL @" + SLPrice + ":Ltp@" + ltp + ":L@" + low + ":O@" + open + ":H@" + high );
-				
+				sendAlertMail(Stockname + "=>P-Bought @" + sellprice + " SL @" + SLPrice + ":Ltp@" + ltp + ":L@" + low
+						+ ":O@" + open + ":H@" + high);
 
 			}
 		} catch (Exception e) {
 			throw e;
 		}
 	}
-
-	
 
 	public void getRowValue(int i) throws Exception {
 		try {
@@ -204,11 +204,11 @@ public class BuySellOrder extends Exception {
 			String rowValues = getElement(driver,
 					By.xpath("(//table[@id='tbl_" + TableName + "']/tbody/tr)[" + i + "]")).getText();
 			Stockname = rowValues.split("\\n")[0].trim();
-			if(Stockname.length()>25){
+			if (Stockname.length() > 25) {
 				Stockname = Stockname.substring(0, 23);
-					
+
 			}
-			Stockkey = Stockname.replace(" ","").trim();			
+			Stockkey = Stockname.replace(" ", "").trim();
 			String[] priceDetails = (rowValues.split("\\n")[1].replaceAll(",", "")).trim().split(" ");
 			ltp = Float.valueOf(priceDetails[hdrMap.get("LTP") - 3]);
 			buyprice = Float.valueOf(priceDetails[hdrMap.get("BuyPrice") - 3]);
@@ -221,7 +221,7 @@ public class BuySellOrder extends Exception {
 			changePer = Float.valueOf(priceDetails[hdrMap.get("%Change") - 3]);
 			totbuyqnty = Integer.valueOf(priceDetails[hdrMap.get("TotalBuyQty") - 3]);// needtoupdate
 			totsellqnty = Integer.valueOf(priceDetails[hdrMap.get("TotalSellQty") - 3]);
-			
+
 		} catch (Exception e) {
 			throw e;
 		}
@@ -232,11 +232,13 @@ public class BuySellOrder extends Exception {
 		try {
 			ActionMsg = " Get Value of Row Nbr => " + String.valueOf(strStockname);
 			System.out.println("\n*** Reading the values from site Row Number: " + String.valueOf(strStockname) + "\n");
-			String StockRow = "//table[@id='tbl_" + TableName + "']/tbody/descendant::td[contains(@class,'companyName')and contains(text(),'"+ strStockname + "')]/..";
+			String StockRow = "//table[@id='tbl_" + TableName
+					+ "']/tbody/descendant::td[contains(@class,'companyName')and contains(text(),'" + strStockname
+					+ "')]/..";
 
 			getElement(driver, By.xpath(StockRow)).click();
-			String rowValues = getElement(driver, By.xpath(StockRow)).getText();			
-			
+			String rowValues = getElement(driver, By.xpath(StockRow)).getText();
+
 			String[] priceDetails = (rowValues.split("\\n")[1].replaceAll(",", "")).trim().split(" ");
 			ltp = Float.valueOf(priceDetails[hdrMap.get("LTP") - 3]);
 			buyprice = Float.valueOf(priceDetails[hdrMap.get("BuyPrice") - 3]);
@@ -249,8 +251,7 @@ public class BuySellOrder extends Exception {
 			changePer = Float.valueOf(priceDetails[hdrMap.get("%Change") - 3]);
 			totbuyqnty = Integer.valueOf(priceDetails[hdrMap.get("TotalBuyQty") - 3]);// needtoupdate
 			totsellqnty = Integer.valueOf(priceDetails[hdrMap.get("TotalSellQty") - 3]);
-			
-			
+
 		} catch (Exception e) {
 			throw e;
 		}
@@ -285,7 +286,7 @@ public class BuySellOrder extends Exception {
 			TSL = Float.valueOf(InputProp.get("TriggerSL").toString());
 			Orderlimit = Integer.valueOf(InputProp.get("OrderLimit").toString());
 			ExtraProfit = Integer.valueOf(InputProp.get("ExtraProfit").toString());
-			
+
 			IntraInputProp.clear();
 			IntraInputProp.load(new FileInputStream("C://PlaceOrderBot//IntraOrderInputs.properties"));
 
@@ -294,187 +295,113 @@ public class BuySellOrder extends Exception {
 		}
 	}
 
-	
-	
 	public boolean BuySellPlaceOrder() throws Exception {
 		
 		//SMSAPIJAVA.sendMsg("TestMsg", MobileNumber);
 		
-		
+		/** Buy & Sell the product based on Fibo AVG **/
 		FiboDetails fibo = FiboDetails.FiboMap.get(Stockkey);
-		if ((ltp >= fibo.BuyAbove  && sellprice >= fibo.BuyAbove  && open < fibo.BuyAbove
-				&& open > fibo.SellBelow)) {
+		if (!Orders.MapOrders.containsKey("BuyOrder"+Stockkey)) {
+			if ((ltp >= fibo.BuyAbove && sellprice >= fibo.BuyAbove && ltp<fibo.BuyAbove+limit && open < fibo.BuyAbove && open > fibo.SellBelow)) {
 
-			OrderDetails = Stockname+",BuyOrder," + Qnty + "," + sellprice + "," + SLPrice + "," + low + "," + open + "," + high + "," + close + "," + getCurrentTime()+ ",";
-			Report.addFiboOrderDetailsInCSV(OrderDetails);
-		}
-		if ((ltp <= fibo.SellBelow && buyprice <= fibo.SellBelow  && open > fibo.SellBelow
-				&& open < fibo.BuyAbove)) {
-			
-			String OrderDetails = Stockname+",SellOrder," + Qnty + "," + buyprice + "," + SLPrice + "," + low + "," + open + "," + high + "," + close + "," +  getCurrentTime()+ ",";
-			Report.addFiboOrderDetailsInCSV(OrderDetails);
-			
-		}
-	
-		System.out.println(Orders.getStockOrderdList());
-		if (Orders.getStockOrderdList().size()>0 && Orders.getStockOrderdList().contains(Stockname)){
-			
-			for(Orders ordr :Orders.getStockOrders()){
-				if(ordr.StockName == Stockname && ltp<(open-TSL) && ordr.OrderType.contains("BuyOrder")){
-					
-					// Need to add code for verify the order status in the order book using order id.
-					String OrderDetails = Stockname+",BuySLTriggered," + Qnty + "," + ltp + "," + "" + "," + low + "," + open + "," + high + "," + close + "," + getCurrentTime()+ ",";
-					
-					Report.addOrderDetailsInCSV(OrderDetails);
-					sendAlertMail(Stockname + "=>BuySLTriggered @" + ltp   + " SL @" + SLPrice + ":Ltp@" + ltp + ":L@" + low + ":O@" + open + ":H@" + high );
-					
-					break;
-				}
-				if(ordr.StockName == Stockname  && ltp >(open+SL) && ordr.OrderType.contains("SellOrder")){
-					
-					// Need to add code for verify the order status in the order book using order id.
-					
-					OrderDetails = Stockname+",SellSLTriggered," + Qnty + "," + ltp + "," + "" + "," + low + "," + open + "," + high + "," + close + "," + getCurrentTime()+ ",";
-					
-					Report.addOrderDetailsInCSV(OrderDetails);
-					sendAlertMail(Stockname + "=>SellSLTriggered @" + ltp   + " SL @" + SLPrice + ":Ltp@" + ltp + ":L@" + low + ":O@" + open + ":H@" + high );
-					
-				}
-				
-			}
-			
-		}
-		
-		
-		if (Orders.getStockOrders().size() < Orderlimit && !Orders.getStockOrderdList().contains(Stockname)) {
-
-			if (high == open && open == low) {				
-				return true;
-			}
-			
-			/*-------BUY ORDER & STOPLOSS-------------------*/
-			
-			if (!Orders.getStockOrderdList().contains(Stockname) && ( low == open) && open != high && ltp < (open + limit)
-				&& sellprice > open && sellprice < (open + limit)){
-				
+				OrderDetails = Stockname + ",BuyOrder," + Qnty + "," + sellprice + "," + SLPrice + "," + low + ","
+						+ open + "," + high + "," + close + "," + getCurrentTime() + ",";
+				Report.addFiboOrderDetailsInCSV(OrderDetails);
 				OrderType = "BuyOrder";
-				SLPrice = getRoudOfToFive(open - TSL);  // getRoudOfFloat((open - TSL));   
-				SLTPrice = getRoudOfFloat((open - SL)); 
-				OrderDetails = Stockname+",BuyOrder," + Qnty + "," + sellprice + "," + SLPrice + "," + low + "," + open + "," + high + "," + close + "," + getCurrentTime()+ ",";
-				Report.addOrderDetailsInCSV(OrderDetails);
-				//buyOrder();
-				//SLForBuyOrder();
-				Orders.odrList.add( new Orders(this));
-				
-				sendAlertMail(Stockname + "=>Bought @" + sellprice   + " SL @" + SLPrice+ ":Ltp@" + ltp + ":L@" + low + ":O@" + open + ":H@" + high );
+				Orders.MapOrders.put("BuyOrder"+Stockkey, new Orders(this));
 				
 			}
+		} else if (Orders.MapOrders.containsKey("BuyOrder" + Stockkey)) {			
 			
-			/*-------SELL ORDER & STOPLOSS-------------------*/
-			
-			if (!Orders.getStockOrderdList().contains(Stockname) && (high == open) && open != low && ltp > (open - limit)
-				&& buyprice < open && buyprice > (open - limit)) {
-				
-				OrderType ="SellOrder";
-				SLPrice = getRoudOfToFive(open + TSL);
-				SLTPrice = getRoudOfFloat((open +  SL));  ;
-				OrderDetails = Stockname+",SellOrder," + Qnty + "," + buyprice + "," + SLPrice + "," + low + "," + open + "," + high + "," + close + "," +  getCurrentTime()+ ",";
-				Report.addOrderDetailsInCSV(OrderDetails);
-				//SellOrder();
-				//SLForSellOrder();
-				Orders.odrList.add( new Orders(this));
-				
-				sendAlertMail(Stockname + "=>sold @" + buyprice   + " SL @" + SLPrice + ":Ltp@" + ltp + ":L@" + low + ":O@" + open + ":H@" + high );
-				
+			Orders ordr =Orders.MapOrders.get("BuyOrder" + Stockkey);
+			if(!(ordr.OrderStatus.equals("Closed"))){
+					if (ordr.StockName == Stockname && ltp < fibo.SellBelow && ordr.OrderType.contains("BuyOrder")) {
+	
+						// Need to add code for verify the order status in the order book using order id.
+						String OrderDetails = Stockname + ",BuySLTriggered," + Qnty + "," + ltp + "," + "" + "," + low + ","
+								+ open + "," + high + "," + close + "," + getCurrentTime() + ",";
+						Report.addOrderDetailsInCSV(OrderDetails);
+						ordr.OrderStatus = "Closed";
+					}	
+			} else {
+				if (ordr.StockName == Stockname && ltp > fibo.BuyTGT1 && ordr.OrderType.contains("BuyOrder")) {
+
+					// Need to add code for verify the order status in the order book using order id.
+					String OrderDetails = Stockname + ",BuyTargetAchieved," + Qnty + "," + ltp + "," + "" + "," + low
+							+ "," + open + "," + high + "," + close + "," + getCurrentTime() + ",";
+					Report.addOrderDetailsInCSV(OrderDetails);
+					ordr.OrderStatus = "Closed";
+
+				}
 			}
-			
-			/*------------------------------ Order From Sheet-------------------------------------------*/
-			/*-------BUY ORDER & STOPLOSS-------------------*/
-			
-			/*if (!Orders.getStockOrderdList().contains(Stockname) && !IntraInputProp.isEmpty()) {
+				
 
-				for (Object lkey : IntraInputProp.keySet()) {
-					if (Stockname.contains((String) lkey)) {
-						String orderValue = IntraInputProp.getProperty((String) lkey);
-						Float iBuyStop = 0.0f;
-						String[] price = orderValue.split(",");
-						sellprice = Float.valueOf(price[3]);
-						iBuyStop = Float.valueOf(price[2]);
-						SLPrice = getRoudOfToFive(iBuyStop - SL);
-						SLTPrice = getRoudOfFloat((iBuyStop ));
-						
-						if (ltp > sellprice - 2 && ltp < sellprice) {
-							OrderType = "BuyOrder";
-							buyOrder();
-							SLForBuyOrder();
-							Orders.odrList.add(order = new Orders(this));
-							
-							sendAlertMail(Stockname + "=>Bought @" + sellprice + " SL @" + SLPrice);
-							IntraInputProp.remove(lkey);
-							OutputStream out = new FileOutputStream(new File("C://PlaceOrderBot//IntraOrderInputs.properties"));
-							IntraInputProp.store(out, null);
-							
-						}
+		}
+		/**Sell the product based on Fibo AVG **/
+		if (!Orders.MapOrders.containsKey("SellOrder" + Stockkey)) {
+			if (ltp <= fibo.SellBelow && buyprice <= fibo.SellBelow && open > fibo.SellBelow && open < fibo.BuyAbove
+					&& ltp > fibo.SellBelow - limit) {
+
+				String OrderDetails = Stockname + ",SellOrder," + Qnty + "," + buyprice + "," + SLPrice + "," + low
+						+ "," + open + "," + high + "," + close + "," + getCurrentTime() + ",";
+				Report.addFiboOrderDetailsInCSV(OrderDetails);
+				OrderType = "SellOrder";
+				Orders.MapOrders.put("SellOrder" + Stockkey, new Orders(this));
+
+			}
+		} else if (Orders.MapOrders.containsKey("SellOrder" + Stockkey)) {
+
+			Orders ordr = Orders.MapOrders.get("BuyOrder" + Stockkey);
+			/*** Checking Stop Loss Conditions and Profit Booking Condition ***/
+			if (!ordr.OrderStatus.equals("Closed")) {
+				if (ordr.StockName == Stockname && ltp > fibo.BuyAbove && ordr.OrderType.contains("SellOrder")) {
+
+					// Need to add code for verify the order status in the order book using order id.
+					OrderDetails = Stockname + ",SellSLTriggered," + Qnty + "," + ltp + "," + "" + "," + low + ","
+							+ open + "," + high + "," + close + "," + getCurrentTime() + ",";
+					Report.addOrderDetailsInCSV(OrderDetails);
+					ordr.OrderStatus = "Closed";
+
+				} else {
+					if (ordr.StockName == Stockname && ltp < fibo.SellTGT1 && ordr.OrderType.contains("SellOrder")) {
+
+						// Need to add code for verify the order status in the order book using order id.
+						OrderDetails = Stockname + ",SellTargetAchieved," + Qnty + "," + ltp + "," + "" + "," + low
+								+ "," + open + "," + high + "," + close + "," + getCurrentTime() + ",";
+						Report.addOrderDetailsInCSV(OrderDetails);
+						ordr.OrderStatus = "Closed";
+
 					}
-					
 
 				}
-			}*/
-			
-		/*	-------SELL ORDER & STOPLOSS-------------------*/
-			
-			/*if (!listockssold.contains(Stockname) && !IntraInputProp.isEmpty()) {
-
-				for (Object lkey : IntraInputProp.keySet()) {
-					if (Stockname.contains((String) lkey)) {
-						
-						String orderValue = IntraInputProp.getProperty((String) lkey);
-						Float iBuyStop = 0.0f;
-						String[] price = orderValue.split(",");
-						buyprice = Float.valueOf(price[0]);
-						iBuyStop = Float.valueOf(price[1]);
-						SLPrice = getRoudOfToFive(iBuyStop - SL);
-						SLTPrice = getRoudOfFloat((iBuyStop ));
-						
-						if (ltp < buyprice + 2 && ltp > buyprice) {
-
-							OrderType = "SellOrder";
-							SellOrder();
-							listockssold.add(Stockname);
-							SLForSellOrder();
-							Orders.odrList.add(order = new Orders(this));
-
-							sendAlertMail(Stockname + "=>sold @" + buyprice + " SL @" + SLPrice);
-							OutputStream out = new FileOutputStream(new File("C://PlaceOrderBot//IntraOrderInputs.properties"));
-							IntraInputProp.store(out, null);
-
-						}
-					}
-				}
-			}*/
+			}
 		}
 		return true;	
 	}
 
 	public boolean logIntoApp() throws Exception {
 		try {
-            MobileNumber = MailProp.getProperty("MobileNumber");
+			MobileNumber = MailProp.getProperty("MobileNumber");
 			ActionMsg = "log Into Application";
 			TableName = MailProp.getProperty("TableName");
 			driver.get("https://trade.angelbroking.com");
 			driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
 			driver.manage().timeouts().pageLoadTimeout(10000, TimeUnit.MILLISECONDS);
 			driver.manage().window().fullscreen();
-			//driver.manage().window().maximize();
-			getElement(driver,By.id("txtUserID")).sendKeys(MailProp.getProperty("TradeUserID"));
-			getElement(driver,By.id("txtTradingPassword")).sendKeys(MailProp.getProperty("TradePassword"));
-			getElement(driver,By.id("toggleBox")).click();
-			getElement(driver,By.xpath("//span[text()='Trading']")).click();
-			getElement(driver,By.id("loginBtn")).click();
-			getElement(driver, By.xpath("//table[@id='tbl_" + TableName + "']/tbody/tr[1]/descendant::td[contains(@id,'ltrate_')]")).isDisplayed();
-			
+			// driver.manage().window().maximize();
+			getElement(driver, By.id("txtUserID")).sendKeys(MailProp.getProperty("TradeUserID"));
+			getElement(driver, By.id("txtTradingPassword")).sendKeys(MailProp.getProperty("TradePassword"));
+			getElement(driver, By.id("toggleBox")).click();
+			getElement(driver, By.xpath("//span[text()='Trading']")).click();
+			getElement(driver, By.id("loginBtn")).click();
+			getElement(driver,
+					By.xpath(
+							"//table[@id='tbl_" + TableName + "']/tbody/tr[1]/descendant::td[contains(@id,'ltrate_')]"))
+									.isDisplayed();
+
 			Thread.sleep(3000);
-			List<WebElement> ele = driver.findElements(By.xpath("//*[@class='dataTables_scrollHeadInner']/descendant::th/span"));
+			List<WebElement> ele = driver
+					.findElements(By.xpath("//*[@class='dataTables_scrollHeadInner']/descendant::th/span"));
 			int j = 1;
 			for (WebElement e : ele) {
 				Actions actions = new Actions(driver);
@@ -495,7 +422,7 @@ public class BuySellOrder extends Exception {
 
 		try {
 			ActionMsg = "buyOrder Script Name " + Stockname;
-			
+
 			getElement(driver, By.xpath("//a[@class='fR blue_btn' and text()='Buy']")).click();// Click
 			getElement(driver, By.xpath("//*[@id='divProductType']/div[2]/span")).click();// Click
 			getElement(driver, By.xpath("//*[@id='ddlProductType']/li[2]/a")).click();// Click
@@ -510,9 +437,9 @@ public class BuySellOrder extends Exception {
 			getElement(driver, By.id("btnOk_Confirm")).click();
 			getElement(driver, By.xpath("//a[@title='" + TableName + "']"));
 			getElement(driver, By.xpath("//a[@title='" + TableName + "']")).click();
-	
+
 			OdrID = 0;
-			OrderStatus =null;
+			OrderStatus = null;
 		} catch (Exception e) {
 			throw e;
 		}
@@ -561,9 +488,9 @@ public class BuySellOrder extends Exception {
 			getElement(driver, By.id("btnOk_Confirm")).click();
 			getElement(driver, By.xpath("//a[@title='" + TableName + "']"));
 			getElement(driver, By.xpath("//a[@title='" + TableName + "']")).click();
-			SLOdrID =0;
-			SLOdrIDStatus =null;
-			
+			SLOdrID = 0;
+			SLOdrIDStatus = null;
+
 		} catch (Exception e) {
 			throw e;
 		}
@@ -590,9 +517,9 @@ public class BuySellOrder extends Exception {
 			getElement(driver, By.id("btnOk_Confirm")).click();
 			getElement(driver, By.xpath("//a[@title='" + TableName + "']"));
 			getElement(driver, By.xpath("//a[@title='" + TableName + "']")).click();
-			SLOdrID =0;
-			SLOdrIDStatus =null;
-			
+			SLOdrID = 0;
+			SLOdrIDStatus = null;
+
 		} catch (Exception e) {
 			throw e;
 		}
@@ -741,14 +668,14 @@ public class BuySellOrder extends Exception {
 			limit = 4.10f;
 		else if (open > 3501)
 			limit = 4.80f;
-		
-		//System.out.println("Limit " + limit);
+
+		// System.out.println("Limit " + limit);
 		return limit;
 
 	}
 
 	public float getProfitPrice() {
-		
+
 		if (open <= 175)
 			profit = 1.50f;
 		else if (open > 176 && open <= 300)
@@ -769,16 +696,16 @@ public class BuySellOrder extends Exception {
 			profit = 6.40f;
 		else if (open > 3501)
 			profit = 8.20f;
-		
-			profit = profit+ExtraProfit;
-			
+
+		profit = profit + ExtraProfit;
+
 		return profit;
 
 	}
 
-	public LinkedHashMap<String, Float> getFiboOutput() throws Exception{
-		LinkedHashMap<String, Float> FiboOut = new LinkedHashMap<String, Float> ();	
-		//open = ltp;
+	public LinkedHashMap<String, Float> getFiboOutput() throws Exception {
+		LinkedHashMap<String, Float> FiboOut = new LinkedHashMap<String, Float>();
+		// open = ltp;
 		Float Upb = Base.TruncateFloatValue((open + (open * 0.01f)));
 		Float Upa = Base.TruncateFloatValue(open);
 		Float Upc = Base.TruncateFloatValue((Upb - ((Upb - Upa) * 0.618f)));
@@ -790,101 +717,117 @@ public class BuySellOrder extends Exception {
 		Float DnR1382 = Base.TruncateFloatValue((Dnb + ((Dna - Dnb) * 1.382f)));
 
 		Float UpExtn1382 = Base.TruncateFloatValue((Upc + ((Upb - Upa) * 1.382f)));
-		Float UpExtn100 = Base.TruncateFloatValue((Upc + ((Upb - Upa) * 1f)));        //Up100 UpExtn100
+		Float UpExtn100 = Base.TruncateFloatValue((Upc + ((Upb - Upa) * 1f))); // Up100
+																				// UpExtn100
 		Float UpExtn382 = Base.TruncateFloatValue((Upc + ((Upb - Upa) * 0.382f)));
-		Float UpExtn236 = Base.TruncateFloatValue((Upc + ((Upb - Upa) * 0.236f)));	// Up100 UpExt236
-		Float UpRExtnavg = Base.TruncateFloatValue(((UpR1382 + UpExtn236) / 2));     // UpRExtnavg
-		Float BuyTrig = Base.TruncateFloatValue(((open + UpExtn236) / 2));           
- 
-		Float DnExtn236 = Base.TruncateFloatValue((Dnc - ((Dna - Dnb) * 0.236f)));   // DnExtn236
+		Float UpExtn236 = Base.TruncateFloatValue((Upc + ((Upb - Upa) * 0.236f))); // Up100
+																					// UpExt236
+		Float UpRExtnavg = Base.TruncateFloatValue(((UpR1382 + UpExtn236) / 2)); // UpRExtnavg
+		Float BuyTrig = Base.TruncateFloatValue(((open + UpExtn236) / 2));
+
+		Float DnExtn236 = Base.TruncateFloatValue((Dnc - ((Dna - Dnb) * 0.236f))); // DnExtn236
 		Float DnExtn382 = Base.TruncateFloatValue((Dnc - ((Dna - Dnb) * 0.382f)));
-		Float DnExtn100 = Base.TruncateFloatValue((Dnc - ((Dna - Dnb) * 1)));        // down DnExtn100
+		Float DnExtn100 = Base.TruncateFloatValue((Dnc - ((Dna - Dnb) * 1))); // down
+																				// DnExtn100
 		Float DnExtn1382 = Base.TruncateFloatValue((Dnc - ((Dna - Dnb) * 1.382f)));
-		Float DnRExtnavg = Base.TruncateFloatValue(((DnR1382 + DnExtn236) / 2));     // DnRExtnavg
-		Float SellTrig = Base.TruncateFloatValue(((open + DnExtn236) / 2));         
-		
-		
+		Float DnRExtnavg = Base.TruncateFloatValue(((DnR1382 + DnExtn236) / 2)); // DnRExtnavg
+		Float SellTrig = Base.TruncateFloatValue(((open + DnExtn236) / 2));
+
 		FiboOut.put("SellBelow", DnExtn236);
 		FiboOut.put("SellTGT1", DnExtn100);
 		FiboOut.put("SellSL1", DnRExtnavg);
 		FiboOut.put("SellSL2", UpExtn236);
-		
+
 		FiboOut.put("BuySL2", DnExtn236);
 		FiboOut.put("BuySL1", UpRExtnavg);
 		FiboOut.put("BuyAbove", UpExtn236);
 		FiboOut.put("BuyTGT1", UpExtn100);
-		
+
 		return FiboOut;
-		
+
 	}
-	
-	public void gettotQntyOutput() throws Exception{
-		
-		if (((totbuyqnty * 5) <= totsellqnty) && totbuyqnty != 0 && totsellqnty !=0) {
-			
-			sendAlertMail(Stockname + "=> ( " + changePer + ") TotalBuyQnty @" + totbuyqnty   + " TotalSellQnty @" + totsellqnty  );
+
+	public void gettotQntyOutput() throws Exception {
+
+		if (((totbuyqnty * 5) <= totsellqnty) && totbuyqnty != 0 && totsellqnty != 0) {
+
+			sendAlertMail(Stockname + "=> ( " + changePer + ") TotalBuyQnty @" + totbuyqnty + " TotalSellQnty @"
+					+ totsellqnty);
 		}
 
-		if ((totbuyqnty >= (totsellqnty * 5)) && totbuyqnty != 0 && totsellqnty !=0) {
-			
-			sendAlertMail(Stockname + "=> ( " + changePer + ") TotalBuyQnty @" + totbuyqnty   + " TotalSellQnty @" + totsellqnty  );
+		if ((totbuyqnty >= (totsellqnty * 5)) && totbuyqnty != 0 && totsellqnty != 0) {
+
+			sendAlertMail(Stockname + "=> ( " + changePer + ") TotalBuyQnty @" + totbuyqnty + " TotalSellQnty @"
+					+ totsellqnty);
 		}
 	}
-	
-	public void getChangePerOutput() throws Exception{
-		
-		if ((changePer > 1.8 && changePer < 1.85) || (changePer > 2.8 && changePer < 2.9) || (changePer > 5.0 && changePer < 5.1) || (changePer > 6.8 && changePer < 7) || (changePer > 9 && changePer < 9.2) || (changePer > 13 && changePer < 13.2) || (changePer > 15 && changePer < 15.2) || (changePer > 30 && changePer < 34) || (changePer > 40 && changePer < 44)) {
-			
-			sendAlertMail(Stockname + "=> ("+ changePer +"%) LTP @" + ltp   + " low @" + low + " Open @" + open + " High @" + high );
+
+	public void getChangePerOutput() throws Exception {
+
+		if ((changePer > 1.8 && changePer < 1.85) || (changePer > 2.8 && changePer < 2.9)
+				|| (changePer > 5.0 && changePer < 5.1) || (changePer > 6.8 && changePer < 7)
+				|| (changePer > 9 && changePer < 9.2) || (changePer > 13 && changePer < 13.2)
+				|| (changePer > 15 && changePer < 15.2) || (changePer > 30 && changePer < 34)
+				|| (changePer > 40 && changePer < 44)) {
+
+			sendAlertMail(Stockname + "=> (" + changePer + "%) LTP @" + ltp + " low @" + low + " Open @" + open
+					+ " High @" + high);
 		}
 
-		if ((changePer < -1.8 && changePer > -1.85) || (changePer < -2.8 && changePer > -2.9) || (changePer < -5.0 && changePer > -5.1) || (changePer < -6.8 && changePer > -7) || (changePer < -9 && changePer > -9.2) || (changePer < -13 && changePer > -13.2) || (changePer < -15 && changePer > -15.2) || (changePer < -30 && changePer > -34) || (changePer < -40 && changePer > -44)) {
-			
-			sendAlertMail(Stockname + "=> ("+ changePer +"%) LTP @" + ltp   + " low @" + low + " Open @" + open + " High @" + high );
+		if ((changePer < -1.8 && changePer > -1.85) || (changePer < -2.8 && changePer > -2.9)
+				|| (changePer < -5.0 && changePer > -5.1) || (changePer < -6.8 && changePer > -7)
+				|| (changePer < -9 && changePer > -9.2) || (changePer < -13 && changePer > -13.2)
+				|| (changePer < -15 && changePer > -15.2) || (changePer < -30 && changePer > -34)
+				|| (changePer < -40 && changePer > -44)) {
+
+			sendAlertMail(Stockname + "=> (" + changePer + "%) LTP @" + ltp + " low @" + low + " Open @" + open
+					+ " High @" + high);
 		}
 	}
-	
+
 	public Float getRoudOfFloat(Float fl) {
 		String valw = String.valueOf(fl);
-		String values[] = valw.split("\\.");	
-		String price = values[0]+".95";//+values[1].toCharArray()[0]+"5";
-		
+		String values[] = valw.split("\\.");
+		String price = values[0] + ".95";// +values[1].toCharArray()[0]+"5";
+
 		return Float.valueOf(price);
-			
+
 	}
+
 	public Float getRoudOfToFive(Float fl) {
 		String valw = String.valueOf(fl);
-		String values[] = valw.split("\\.");	
-		String price = values[0]+"."+values[1].toCharArray()[0]+"0";
-		
+		String values[] = valw.split("\\.");
+		String price = values[0] + "." + values[1].toCharArray()[0] + "0";
+
 		return Float.valueOf(price);
-			
+
 	}
+
 	public void writelog() {
-		
-		Logger logger = Logger.getLogger("MyLog");  
-	    FileHandler fh;  
 
-	    try {  
+		Logger logger = Logger.getLogger("MyLog");
+		FileHandler fh;
 
-	        // This block configure the logger with handler and formatter  
-	        fh = new FileHandler("C://PlaceOrderBot//MyLogFile.log");  
-	        logger.addHandler(fh);
-	        SimpleFormatter formatter = new SimpleFormatter();  
-	        fh.setFormatter(formatter);  
+		try {
 
-	        // the following statement is used to log any messages  
-	        logger.info("My first log");  
+			// This block configure the logger with handler and formatter
+			fh = new FileHandler("C://PlaceOrderBot//MyLogFile.log");
+			logger.addHandler(fh);
+			SimpleFormatter formatter = new SimpleFormatter();
+			fh.setFormatter(formatter);
 
-	    } catch (SecurityException e) {  
-	        e.printStackTrace();  
-	    } catch (IOException e) {  
-	        e.printStackTrace();  
-	    }  
+			// the following statement is used to log any messages
+			logger.info("My first log");
+
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
-	
+
 	public static void AddFiboDetailsIntoProp(BuySellOrder obj) throws IOException {
-		
+
 		String value = String.valueOf(obj.low) + "," + String.valueOf(obj.high);
 		obj.FiboProp.put(obj.Stockkey, value);
 		OutputStream out = new FileOutputStream(FiboInput);
@@ -897,10 +840,10 @@ public class BuySellOrder extends Exception {
 
 		LinkedHashMap<String, Float> FiboAccurate = new LinkedHashMap<String, Float>();
 		Ylow = Float.valueOf(FiboProp.get(Stockkey).toString().split(",")[0]);
-		YHigh =  Float.valueOf(FiboProp.get(Stockkey).toString().split(",")[1]);
-				
-		FiboAvgPrice = (open+close+Ylow+YHigh)/4;
-		
+		YHigh = Float.valueOf(FiboProp.get(Stockkey).toString().split(",")[1]);
+
+		FiboAvgPrice = (open + close + Ylow + YHigh) / 4;
+
 		Float Upb = Base.TruncateFloatValue((open + (open * 0.01f)));
 		Float Upa = Base.TruncateFloatValue(open);
 		Float Upc = Base.TruncateFloatValue((Upb - ((Upb - Upa) * 0.618f)));
@@ -912,33 +855,34 @@ public class BuySellOrder extends Exception {
 		Float DnR1382 = Base.TruncateFloatValue((Dnb + ((Dna - Dnb) * 1.382f)));
 
 		Float UpExtn1382 = Base.TruncateFloatValue((Upc + ((Upb - Upa) * 1.382f)));
-		Float UpExtn100 = Base.TruncateFloatValue((Upc + ((Upb - Upa) * 1f)));        //Up100 UpExtn100
+		Float UpExtn100 = Base.TruncateFloatValue((Upc + ((Upb - Upa) * 1f))); // Up100
+																				// UpExtn100
 		Float UpExtn382 = Base.TruncateFloatValue((Upc + ((Upb - Upa) * 0.382f)));
-		Float UpExtn236 = Base.TruncateFloatValue((Upc + ((Upb - Upa) * 0.236f)));	// Up100 UpExt236
-		Float UpRExtnavg = Base.TruncateFloatValue(((UpR1382 + UpExtn236) / 2));     // UpRExtnavg
-		Float BuyTrig = Base.TruncateFloatValue(((open + UpExtn236) / 2));           
- 
-		Float DnExtn236 = Base.TruncateFloatValue((Dnc - ((Dna - Dnb) * 0.236f)));   // DnExtn236
+		Float UpExtn236 = Base.TruncateFloatValue((Upc + ((Upb - Upa) * 0.236f))); // Up100
+																					// UpExt236
+		Float UpRExtnavg = Base.TruncateFloatValue(((UpR1382 + UpExtn236) / 2)); // UpRExtnavg
+		Float BuyTrig = Base.TruncateFloatValue(((open + UpExtn236) / 2));
+
+		Float DnExtn236 = Base.TruncateFloatValue((Dnc - ((Dna - Dnb) * 0.236f))); // DnExtn236
 		Float DnExtn382 = Base.TruncateFloatValue((Dnc - ((Dna - Dnb) * 0.382f)));
-		Float DnExtn100 = Base.TruncateFloatValue((Dnc - ((Dna - Dnb) * 1)));        // down DnExtn100
+		Float DnExtn100 = Base.TruncateFloatValue((Dnc - ((Dna - Dnb) * 1))); // down
+																				// DnExtn100
 		Float DnExtn1382 = Base.TruncateFloatValue((Dnc - ((Dna - Dnb) * 1.382f)));
-		Float DnRExtnavg = Base.TruncateFloatValue(((DnR1382 + DnExtn236) / 2));     // DnRExtnavg
-		Float SellTrig = Base.TruncateFloatValue(((open + DnExtn236) / 2));         
-		
+		Float DnRExtnavg = Base.TruncateFloatValue(((DnR1382 + DnExtn236) / 2)); // DnRExtnavg
+		Float SellTrig = Base.TruncateFloatValue(((open + DnExtn236) / 2));
+
 		FiboAccurate.put("SellBelow", DnExtn236);
 		FiboAccurate.put("SellTGT1", DnExtn100);
 		FiboAccurate.put("SellSL1", DnRExtnavg);
 		FiboAccurate.put("SellSL2", UpExtn236);
-		
+
 		FiboAccurate.put("BuySL2", DnExtn236);
 		FiboAccurate.put("BuySL1", UpRExtnavg);
 		FiboAccurate.put("BuyAbove", UpExtn236);
 		FiboAccurate.put("BuyTGT1", UpExtn100);
-		
-		
+
 		return FiboAccurate;
-		
+
 	}
-	
 
 }
