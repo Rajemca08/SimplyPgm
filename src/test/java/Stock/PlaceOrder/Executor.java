@@ -1,5 +1,7 @@
 package Stock.PlaceOrder;
 
+import java.util.Set;
+
 import FiboMailTrigger.FiboCSVReport;
 import FiboMailTrigger.FiboDetails;
 
@@ -26,24 +28,27 @@ public class Executor extends Exception {
 									FiboDetails.FiboMap.put(order.Stockkey,	new FiboDetails(order, order.getAccurateFibo()));
 									fibo.addFiboDetailsInCSV(order, order.getAccurateFibo());
 								}
-								 order.gettotQntyOutput();
-								 order.getChangePerOutput();
 								 order.getLimitPrice();
 								 order.BuySellPlaceOrder();
 							}
-						} /*else if (Orders.getStockOrderdList().size() > 0) {
+						} else if (Orders.getStockOrderdList().size() > 0) {
+
+							Set<String> MapOrdersKeySet = Orders.MapOrders.keySet();
 							try {
-								for (Object str : Orders.StockList) {
-									order.clearFileds();
-									order.getRowValueByStockname((String) str);
-									order.getLimitPrice();
-									order.getProfitPrice();
-									order.profitBooking();
+								for (String Orderkey : MapOrdersKeySet) {
+									Orders object = Orders.MapOrders.get(Orderkey);
+									if(!object.odrStatus.equals("Closed")){
+										order.clearFileds();
+										order.getRowValueByStockname(object.StockKey);
+										order.getLimitPrice();
+										order.getProfitPrice();
+										order.profitBooking(object);
+									}
 								}
 							} catch (Exception e) {
 
 							}
-						}*/
+						}
 						iter++;
 					}
 				}
