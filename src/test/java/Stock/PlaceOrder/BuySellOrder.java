@@ -37,6 +37,8 @@ import CSVReport.CSVReport;
 import ExceptionPack.MyException;
 import FiboMailTrigger.FiboDetails;
 import Mailer.EmailUtil;
+import Stock.PlaceOrder.Orders.orderType;
+import Stock.PlaceOrder.Orders.statusType;
 
 public class BuySellOrder extends Exception {
 
@@ -47,11 +49,14 @@ public class BuySellOrder extends Exception {
 	public Properties IntraInputProp = new Properties();
 	public WebDriver driver = null;
 	public HashMap<String, String> MailHistory = new HashMap<String, String>();
+	public String Credentails = "C://PlaceOrderBot//Credentials.properties";
+		
 	public String OrderDetails = null;
 	public String MobileNumber = null;
 	public static File FiboInput = null;
 
 	/*** Column Values ***/
+	public String Stockkey = null;
 	public String Stockname = null;
 	public Float open = 0.00f;
 	public Float ltp = 0.0f;
@@ -67,7 +72,7 @@ public class BuySellOrder extends Exception {
 
 	public Float Ylow = 0.0f;
 	public Float YHigh = 0.0f;
-	public String Stockkey = null;
+	
 
 	/*** InputFrom Sheet and Manipulation ***/
 	public int Qnty = 0;
@@ -82,7 +87,7 @@ public class BuySellOrder extends Exception {
 	public int ExtraProfit = 0;
 	
 	public String TableName = null;
-	public String OrderType = null;
+	public orderType OrderType  = null;
 	public String ActionMsg = null;
 	
 	public CSVReport Report = CSVReport.getInstance();
@@ -132,18 +137,20 @@ public class BuySellOrder extends Exception {
 
 	public BuySellOrder(String Values) throws Exception {
 		try {
-			ActionMsg = "Constructor => Intializing Properties file";
-
+			ActionMsg = "Constructor => Intializing Properties file";            
 			MailProp.load(new FileInputStream("C://PlaceOrderBot//Credentials.properties"));
 			DateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
 			Date dateobj = new Date();
 			String currentDate = df.format(dateobj);
 			currentDate = currentDate.split(" ")[0].replaceAll("/", "_");
-			// FiboInput = new File("C://PlaceOrderBot//FiboInput//FiboInput"+currentDate+".properties");
-			FiboInput = new File(MailProp.getProperty("FiboInputFile"));
+			FiboInput = new File("C://PlaceOrderBot//FiboInput//FiboInput"+currentDate+".properties");
 			if (!FiboInput.exists())
 				FiboInput.createNewFile();
-
+			else{
+				FiboInput.delete();
+				FiboInput.createNewFile();
+			}
+			addDetailsInCredentials(this,"FiboInputFile", FiboInput.getAbsolutePath());
 			FiboProp.load(new FileInputStream(FiboInput.getPath()));
 			System.setProperty("webdriver.chrome.driver", MailProp.getProperty("chromeExe"));
 			ChromeOptions options = new ChromeOptions();
@@ -162,27 +169,51 @@ public class BuySellOrder extends Exception {
 			FiboDetails fibo = FiboDetails.FiboMap.get(Order.StockKey);
 			//Check  the status for Stop loss order for the Buy Order	
 			
-			if (Order.StockName == Stockname && ltp >= fibo.BuyTGT1 && Order.OrderType.contains("BuyOrder")) {
-				
-				
-				//Then go for profit booking 
-				// Need to add code for sell the qty and cancel the SL Order
-				//SellOrder();				
-				String OrderDetails = Stockname + ",BuySLTriggered," + Qnty + "," + ltp + "," + "" + "," + low + ","
-						+ open + "," + high + "," + close + "," + getCurrentTime() + ",";
-				Report.addOrderDetailsInCSV(OrderDetails);
-				Order.BuyOdrStatus = "Closed";
-			  }
-				
+			if (Order.StockName == Stockname && ltp >= fibo.BuyTGT1 && Order.OrderType.toString().contains("BuyOrder")) {
+				if(!(Order.OrderStaus.toString().equals("Closed"))){
+					    /***Verifying the Stop loss order status for the Buy Order 
+					     * Then Check the Buy Target of the of the order***/
+					    navigateToOrderBook();
+						if(getOrderStatus(Order.SLOdrID).equals("Pending at exchange")){									
+							 if(fibo.BuyTGT1 <= ltp){							 
+								 SellOrder();
+								 Order.Book.put("SELL", GetOrderDetails());
+								 CancelOrder(Order.Book.get("SL").OrderID);
+								 navigateToNSE();
+								 Order.OrderStaus=statusType.Closed;
+							 }
+						}else if(getOrderStatus(Order.SLOdrID).equals("Fully Executed")){
+							
+							String OrderDetails = Stockname + ",BuySLTriggered," + Qnty + "," + ltp + "," + "" + "," + low + ","
+									+ open + "," + high + "," + close + "," + getCurrentTime() + ",";
+							Report.addOrderDetailsInCSV(OrderDetails);
+							Order.OrderStaus=statusType.Closed;
+						}
+				} 	
+			  }				
 			
 			//Check  the status for Stop loss order for the Sell Order
-			if (Order.StockName == Stockname && ltp <= fibo.SellTGT1 && Order.OrderType.contains("SellOrder")) {			
+			if (Order.StockName == Stockname && ltp <= fibo.SellTGT1 && Order.OrderType.toString().contains("SellOrder")) {			
 				
-				// Need to add code for sell the qty and cancel the SL Order
-				String OrderDetails = Stockname + ",BuyTargetAchieved," + Qnty + "," + ltp + "," + "" + "," + low
-						+ "," + open + "," + high + "," + close + "," + getCurrentTime() + ",";
-				Report.addOrderDetailsInCSV(OrderDetails);
-				Order.BuyOdrStatus = "Closed";
+				if(!(Order.OrderStaus.toString().equals("Closed"))){
+				    /***Verifying the Stop loss order status for the Buy Order 
+				     * Then Check the Buy Target of the of the order***/
+				    navigateToOrderBook();
+					if(getOrderStatus(Order.SLOdrID).equals("Pending at exchange")){									
+						 if(fibo.SellTGT1 >= ltp){							 
+							 buyOrder();
+							 Order.Book.put("BUY", GetOrderDetails());
+							 CancelOrder(Order.Book.get("SL").OrderID);
+							 Order.OrderStaus=statusType.Closed;
+						 }
+					}else if(getOrderStatus(Order.SLOdrID).equals("Fully Executed")){
+						
+						String OrderDetails = Stockname + ",SellSLTriggered," + Qnty + "," + ltp + "," + "" + "," + low + ","
+								+ open + "," + high + "," + close + "," + getCurrentTime() + ",";
+						Report.addOrderDetailsInCSV(OrderDetails);
+						Order.OrderStaus=statusType.Closed;
+					}
+			} 	
 
 			 }	 
 			
@@ -296,31 +327,53 @@ public class BuySellOrder extends Exception {
 		//SMSAPIJAVA.sendMsg("TestMsg", MobileNumber);
 		
 		/** Buy & Sell the product based on Fibo AVG **/  
-		/**Need to Add condtion   for sell order if existi and their status  limit order status **/
 		fibo = FiboDetails.FiboMap.get(Stockkey);
 		if (!Orders.MapOrders.containsKey("BuyOrder"+Stockkey) && Orders.StockList.size()<1) {
 			SLPrice = getRoudOfToFive(open - TSL);     
-			SLTPrice = getRoudOfFloat((open - SL));
-			
-			if ((ltp >= fibo.BuyAbove-1 && sellprice >= fibo.BuyAbove-1 && ltp<fibo.BuyAbove-1+limit && open < fibo.BuyAbove && open > fibo.SellBelow)) {
+			SLTPrice = getRoudOfFloat((open - SL));			
+			boolean ConditionFlag = true;
+			if ((low == open && high != open && ltp > open && sellprice > open && ltp < open + limit
+					&& sellprice < open + limit)) {
+				ConditionFlag = true;
 
+			} else if (low == open && high != open && ltp > open && sellprice > open && ltp > fibo.BuyAbove - 1
+					&& sellprice > fibo.BuyAbove - 1 && ltp < fibo.BuyAbove + limit - 1
+					&& sellprice < fibo.BuyAbove + limit - 1) {
+				ConditionFlag = true;
+
+			} else if (open < fibo.BuyAbove && open > fibo.SellBelow && ltp > fibo.BuyAbove - 1
+					&& sellprice > fibo.BuyAbove - 1 && ltp < fibo.BuyAbove + limit - 1
+					&& sellprice < fibo.BuyAbove + limit - 1) {
+				ConditionFlag = true;
+
+			} else if (getDiiference(close, open) < 2 && getDiiference(close, low) < 2 && getDiiference(low, open) < 2
+					&& ltp < close + limit && ltp > close && sellprice < close + limit && sellprice > close) {
+				ConditionFlag = true;
+
+			}
+
+			if (ConditionFlag) {
+				
 				OrderDetails = Stockname + ",BuyOrder," + Qnty + "," + sellprice + "," + SLPrice + "," + low + ","
 						+ open + "," + high + "," + close + "," + getCurrentTime() + ",";
 				Report.addFiboOrderDetailsInCSV(OrderDetails);
-				OrderType = "BuyOrder";
+				
+				OrderType = orderType.BuyOrder;
 				buyOrder();
 				Orders temp = new Orders(this);
 				temp.Book.put("BUY", GetOrderDetails());
 				temp.BuyOdrID = temp.Book.get("BUY").OrderID;
-				Orders.MapOrders.put("BuyOrder"+Stockkey, temp);				
-				SLForBuyOrder(Orders.MapOrders.get("BuyOrder"+Stockkey));
+				Orders.MapOrders.put("BuyOrder" + Stockkey, temp);
+				temp.OrderStaus = statusType.Open;
+				SLForBuyOrder();
 				temp.Book.put("SL", GetOrderDetails());
 				temp.SLOdrID = temp.Book.get("SL").OrderID;
-				
+				temp.OrderStaus = statusType.OpenWithSL;
+				navigateToNSE();
 			}
 		} else if (Orders.MapOrders.containsKey("BuyOrder" + Stockkey)) {
 			Orders ordr =Orders.MapOrders.get("BuyOrder" + Stockkey);
-			if(!(ordr.odrStatus.equals("Closed"))){
+			if(!(ordr.OrderStaus.toString().equals("Closed"))){
 				    /***Verifying the Stop loss order status for the Buy Order 
 				     * Then Check the Buy Target of the of the order***/
 				    navigateToOrderBook();
@@ -329,14 +382,15 @@ public class BuySellOrder extends Exception {
 							 SellOrder();
 							 ordr.Book.put("SELL", GetOrderDetails());
 							 CancelOrder(ordr.Book.get("SL").OrderID);
-							 ordr.odrStatus="Closed";
+							 navigateToNSE();
+							 ordr.OrderStaus=statusType.Closed;
 						 }
 					}else if(getOrderStatus(ordr.SLOdrID).equals("Fully Executed")){
 						
 						String OrderDetails = Stockname + ",BuySLTriggered," + Qnty + "," + ltp + "," + "" + "," + low + ","
 								+ open + "," + high + "," + close + "," + getCurrentTime() + ",";
 						Report.addOrderDetailsInCSV(OrderDetails);
-						ordr.odrStatus="Closed";
+						ordr.OrderStaus=statusType.Closed;
 					}
 			} 			
 
@@ -344,45 +398,73 @@ public class BuySellOrder extends Exception {
 		/**Sell the product based on Fibo AVG **/
 		if (!Orders.MapOrders.containsKey("SellOrder" + Stockkey)&& Orders.StockList.size()<1) {
 			
-			if (ltp <= fibo.SellBelow && buyprice <= fibo.SellBelow && open > fibo.SellBelow && open < fibo.BuyAbove
-					&& ltp > fibo.SellBelow - limit) {
+			SLPrice = getRoudOfToFive(open + TSL);
+			SLTPrice = getRoudOfFloat((open + SL));			
+			boolean ConditionFlag = false;
+			if (low != open && high == open && ltp < open && buyprice < open && ltp > open - limit
+					&& buyprice > open - limit) {
+			
+				ConditionFlag = true;
 				
+			} else if (low != open && high == open && ltp < open && buyprice < open && ltp < fibo.SellBelow + 1
+					&& buyprice > fibo.SellBelow + 1 && ltp > fibo.SellBelow - limit + 1
+					&& buyprice < fibo.BuyAbove - limit + 1) {
+				
+				ConditionFlag = true;
+				
+
+			} else if (open < fibo.BuyAbove && open > fibo.SellBelow && ltp < fibo.SellBelow + 1
+					&& buyprice < fibo.SellBelow + 1 && ltp > fibo.SellBelow - limit + 1
+					&& buyprice > fibo.SellBelow - limit + 1) {
+				
+				ConditionFlag = true;
+				
+			}else if (getDiiference(close, open) < 2 && getDiiference(close, high) < 2 && getDiiference(high, open) < 2
+					&& ltp > close -limit && ltp<close && sellprice > close -limit && sellprice<close) {
+			
+				ConditionFlag = true;
+
+			}
+
+			if (ConditionFlag) {
+
 				String OrderDetails = Stockname + ",SellOrder," + Qnty + "," + buyprice + "," + SLPrice + "," + low
 						+ "," + open + "," + high + "," + close + "," + getCurrentTime() + ",";
 				Report.addFiboOrderDetailsInCSV(OrderDetails);
-				OrderType = "SellOrder";
+				OrderType = orderType.SellOrder;
 				SellOrder();
 				Orders temp = new Orders(this);
-				Orders.MapOrders.put("SellOrder" + Stockkey,temp);
-				temp.Book.put("SELL", GetOrderDetails());	
+				Orders.MapOrders.put("SellOrder" + Stockkey, temp);
+				temp.Book.put("SELL", GetOrderDetails());
 				temp.SellOdrID = temp.Book.get("SELL").OrderID;
-				SLPrice = getRoudOfToFive(open + TSL);
-				SLTPrice = getRoudOfFloat((open +  SL)); 
-				SLForSellOrder(fibo);
+				temp.OrderStaus = statusType.Open;
+				/*** Stop Loss for Sell Order ****/
+				SLForSellOrder();
 				temp.Book.put("SL", GetOrderDetails());
 				temp.SLOdrID = temp.Book.get("SL").OrderID;
-
+				temp.OrderStaus = statusType.OpenWithSL;
+				navigateToNSE();
 			}
 		} else if (Orders.MapOrders.containsKey("SellOrder" + Stockkey)) {				
 
 			Orders ordr =Orders.MapOrders.get("SellOrder" + Stockkey);
-			if(!(ordr.odrStatus.equals("Closed"))){
+			if(!(ordr.OrderStaus.toString().equals("Closed"))){
 				    /***Verifying the Stop loss order status for the Buy Order 
 				     * Then Check the Buy Target of the of the order***/
-				    navigateToOrderBook();
-					if(getOrderStatus(ordr.SLOdrID).equals("Pending at exchange")){									
-						 if(fibo.SellTGT1 >= ltp){							 
-							 buyOrder();
-							 ordr.Book.put("BUY", GetOrderDetails());
-							 CancelOrder(ordr.Book.get("SL").OrderID);
-							 ordr.odrStatus="Closed";
-						 }
-					}else if(getOrderStatus(ordr.SLOdrID).equals("Fully Executed")){
+				navigateToOrderBook();
+				if (getOrderStatus(ordr.SLOdrID).equals("Pending at exchange")) {
+					if (fibo.SellTGT1 >= ltp) {
+						buyOrder();
+						ordr.Book.put("BUY", GetOrderDetails());
+						CancelOrder(ordr.Book.get("SL").OrderID);
+						ordr.OrderStaus = statusType.Closed;
+					}
+				} else if(getOrderStatus(ordr.SLOdrID).equals("Fully Executed")){
 						
 						String OrderDetails = Stockname + ",SellSLTriggered," + Qnty + "," + ltp + "," + "" + "," + low + ","
 								+ open + "," + high + "," + close + "," + getCurrentTime() + ",";
 						Report.addOrderDetailsInCSV(OrderDetails);
-						ordr.odrStatus="Closed";
+						ordr.OrderStaus=statusType.Closed;
 					}
 			} 		
 		}
@@ -445,8 +527,7 @@ public class BuySellOrder extends Exception {
 			getElement(driver, By.xpath("//*[@id='btnSubmitOrder']")).click();
 			getElement(driver, By.xpath("//*[@id='btnConfirm']")).click();
 			getElement(driver, By.id("btnOk_Confirm")).click();
-			getElement(driver, By.xpath("//a[@title='" + TableName + "']"));
-			getElement(driver, By.xpath("//a[@title='" + TableName + "']")).click();            
+         
 			
 		} catch (Exception e) {
 			throw e;
@@ -469,14 +550,13 @@ public class BuySellOrder extends Exception {
 			getElement(driver, By.xpath("//*[@id='btnSubmitOrder']")).click();
 			getElement(driver, By.xpath("//*[@id='btnConfirm']")).click();
 			getElement(driver, By.id("btnOk_Confirm")).click();
-			getElement(driver, By.xpath("//a[@title='" + TableName + "']"));
-			getElement(driver, By.xpath("//a[@title='" + TableName + "']")).click();
+			
 		} catch (Exception e) {
 			throw e;
 		}
 	}
 
-	public boolean  SLForBuyOrder(Orders order) throws Exception {
+	public void  SLForBuyOrder() throws Exception {
 		try {
 
 			ActionMsg = "SLForBuyOrder Script Name " + Stockname;
@@ -489,23 +569,20 @@ public class BuySellOrder extends Exception {
 			if (myLink.isDisplayed()) {
 				myLink.click();
 			}
-			getElement(driver, By.xpath("//*[@id='txtQuantity']")).sendKeys(String.valueOf(1));
-			getElement(driver, By.xpath("//*[@id='txtPrice']")).sendKeys(String.valueOf(589));
-			getElement(driver, By.xpath("//*[@id='txtTrigPrice']")).sendKeys(String.valueOf(590));
+			getElement(driver, By.xpath("//*[@id='txtQuantity']")).sendKeys(String.valueOf(Qnty));
+			getElement(driver, By.xpath("//*[@id='txtPrice']")).sendKeys(String.valueOf(SLPrice));
+			getElement(driver, By.xpath("//*[@id='txtTrigPrice']")).sendKeys(String.valueOf(SLTPrice));
 			getElement(driver, By.xpath("//*[@id='btnSubmitOrder']")).click();
 			getElement(driver, By.xpath("//*[@id='btnConfirm']")).click();
 			getElement(driver, By.id("btnOk_Confirm")).click();
-			getElement(driver, By.xpath("//a[@title='" + TableName + "']"));
-			getElement(driver, By.xpath("//a[@title='" + TableName + "']")).click();
-			order.SLOdrID =null;		
-
+			
 		} catch (Exception e) {
 			throw e;
 		}
-		return true;
+		
 	}
 
-	public boolean SLForSellOrder(FiboDetails fibo) throws Exception {
+	public void SLForSellOrder() throws Exception {
     System.out.println("Values");
 		try {
 			getElement(driver, By.xpath("//a[@class='fR blue_btn' and text()='Buy']")).click();// ClickBuyButton
@@ -518,15 +595,12 @@ public class BuySellOrder extends Exception {
 				myLink.click();
 			}
 			getElement(driver, By.xpath("//*[@id='txtQuantity']")).sendKeys(String.valueOf(Qnty));	
-			getElement(driver, By.xpath("//*[@id='txtPrice']")).sendKeys(String.valueOf(fibo.BuyAbove));
+			getElement(driver, By.xpath("//*[@id='txtPrice']")).sendKeys(String.valueOf(SLPrice));
 			getElement(driver, By.xpath("//*[@id='txtTrigPrice']")).sendKeys(String.valueOf(SLTPrice));
 			getElement(driver, By.xpath("//*[@id='btnSubmitOrder']")).click();
 			getElement(driver, By.xpath("//*[@id='btnConfirm']")).click();
 			getElement(driver, By.id("btnOk_Confirm")).click();
 			
-					
-			return true;
-
 		} catch (Exception e) {
 			throw e;
 		}
@@ -841,11 +915,17 @@ public class BuySellOrder extends Exception {
 		OutputStream out = new FileOutputStream(FiboInput);
 		obj.FiboProp.store(out, null);
 	}
+	
+	public  static void addDetailsInCredentials(BuySellOrder obj ,String key, String path) throws IOException {
+		
+		obj.MailProp.put(key, path);
+		OutputStream out = new FileOutputStream(obj.Credentails);
+		obj.MailProp.store(out, null);
+	}
 
 	public LinkedHashMap<String, Float> getAccurateFibo() throws Exception {
 
 		Float FiboAvgPrice = 0.0f;
-
 		LinkedHashMap<String, Float> FiboAccurate = new LinkedHashMap<String, Float>();
 		Ylow = Float.valueOf(FiboProp.get(Stockkey).toString().split(",")[0]);
 		YHigh = Float.valueOf(FiboProp.get(Stockkey).toString().split(",")[1]);
@@ -944,6 +1024,12 @@ public class BuySellOrder extends Exception {
 		   getElement(driver, By.xpath("//a[@title='" + TableName + "']")).click();
 		   
 		   return book;
+    }
+    
+    
+    public float getDiiference(Float a , Float b){      	
+    	Float diff =  a>b?a-b:b-a;
+    	return diff;
     }
 
 

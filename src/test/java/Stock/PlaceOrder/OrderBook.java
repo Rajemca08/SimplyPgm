@@ -35,9 +35,8 @@ public class OrderBook {
 				order.navigateToOrderBook();
 				order.navigateToNSE();
 				order.navigateToOrderBook();
-				order.getOrderStatus("1000000001819736");
-				order.CancelOrder("1000000001819736");
-				order.getOrderStatus("1000000001819736");				
+				order.getOrderStatus("1000000006247258");
+				order.CancelOrder("1000000006390634");								
 				
 
 			} catch (Exception e) {

@@ -37,7 +37,7 @@ public class Executor extends Exception {
 							try {
 								for (String Orderkey : MapOrdersKeySet) {
 									Orders object = Orders.MapOrders.get(Orderkey);
-									if(!object.odrStatus.equals("Closed")){
+									if(!object.OrderStaus.toString().equals("Closed")){
 										order.clearFileds();
 										order.getRowValueByStockname(object.StockKey);
 										order.getLimitPrice();
